@@ -11,9 +11,13 @@
 class Directory
 {
 public:
+    typedef std::list<boost::filesystem::path> path_list_type;
+
     Directory(std::string dirPath);
     ~Directory();
+
 private:
-    std::string _dirPath;
+    std::map<std::string,path_list_type> _dirContents;
+    int _getFiles();
 
 };
