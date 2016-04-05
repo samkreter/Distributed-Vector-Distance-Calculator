@@ -30,7 +30,7 @@ int main(int argc, char * argv[])
         // }
 
         //wait for the workers to finish to collect the results
-        MPI_Barrier(MPI_COMM_WORLD);
+        //MPI_Barrier(MPI_COMM_WORLD);
 
     }
     else
@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
         // ++++++++++++++++++++++++++++++
 
         //used for the barrier in master
-        MPI_Barrier(MPI_COMM_WORLD);
+        //MPI_Barrier(MPI_COMM_WORLD);
     }
 
     //Shut down MPI

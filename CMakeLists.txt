@@ -18,3 +18,9 @@ endif()
 message(AUTHOR_WARNING:"If you see 'Could NOT find Boost' then you must install boost for this to work")
 
 
+
+    add_library(saminal src/saminal.cpp)
+    target_link_libraries(saminal ${Boost_LIBRARIES})
+
+    add_executable(tester test/unit_tests.cpp)
+    target_link_libraries(tester saminal)
