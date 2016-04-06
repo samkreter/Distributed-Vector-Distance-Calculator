@@ -6,6 +6,22 @@
 
 #IncludeRegexTransform: 
 
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/Directory.hpp
+iostream
+-
+string
+-
+boost/filesystem.hpp
+-
+map
+-
+sstream
+-
+boost/filesystem/operations.hpp
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/boost/filesystem/operations.hpp
+boost/filesystem/path.hpp
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/boost/filesystem/path.hpp
+
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/main.cpp
 iostream
 -
@@ -17,4 +33,6 @@ string
 -
 mpi.h
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/mpi.h
+include/Directory.hpp
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/Directory.hpp
 

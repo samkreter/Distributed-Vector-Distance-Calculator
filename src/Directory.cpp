@@ -6,6 +6,15 @@ Directory::Directory(std::string dirPath){
     }
 }
 
+void Directory::print_dir(){
+    for(auto& file : this->_dirContents){
+        std::cout<<file.first<<std::endl;
+        for(auto& name : file.second){
+            std::cout<<name<<std::endl;
+        }
+        std::cout<<std::endl;
+    }
+}
 
 int Directory::_getFiles(std::string dir){
     // Define my map keys
@@ -17,7 +26,7 @@ int Directory::_getFiles(std::string dir){
     // REGULAR -> {file1r,file2r,...,fileNr}
     // DIRECTORY -> {file1d,file2d,...,fileNd}
     // ...
-    std::map<std::string,path_list_type> directoryContents;
+
 
     // Change to the absolute system path, instead of relative
     //boost::filesystem::path dirPath(boost::filesystem::system_complete(dir));
@@ -49,19 +58,19 @@ int Directory::_getFiles(std::string dir){
         try{
             if ( boost::filesystem::is_directory( dir_itr->status() ) ){
                 // Note, for path the "/" operator is overloaded to append to the path
-                directoryContents[directory_file].push_back(dir_itr->path());
+                _dirContents[directory_file].push_back(dir_itr->path());
 #ifdef DEBUG
                 std::cout << dir_itr->path().filename() << " [directory]" << std::endl;
 #endif
             }
             else if ( boost::filesystem::is_regular_file( dir_itr->status() ) ){
-                directoryContents[regular_file].push_back(dir_itr->path());
+                _dirContents[regular_file].push_back(dir_itr->path());
 #ifdef DEBUG
                 std::cout << "Found regular file: " << dir_itr->path().filename() << std::endl;
 #endif
             }
             else{
-                directoryContents[other_file].push_back(dir_itr->path());
+                _dirContents[other_file].push_back(dir_itr->path());
 #ifdef DEBUG
                 std::cout << dir_itr->path().filename() << " [other]" << std::endl;
 #endif
@@ -74,6 +83,5 @@ int Directory::_getFiles(std::string dir){
         }
     }
 
-    this->_dirContents = directoryContents;
     return 1;
 }
