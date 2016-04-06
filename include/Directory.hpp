@@ -8,8 +8,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
 
-class Directory
-{
+class Directory{
 public:
     typedef std::list<boost::filesystem::path> path_list_type;
 
