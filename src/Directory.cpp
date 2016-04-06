@@ -34,10 +34,9 @@ int Directory::_getFiles(std::string dir){
         throw std::runtime_error(msg.str());
     }
 
-#ifdef GJS_DEBUG_PRINT
+#ifdef DEBUG
     std::cout << "Processing directory: " << dirPath.directory_string() << std::endl;
 #endif
-
     // A director iterator... is just that,
     // an iterator through a directory... crazy!
     boost::filesystem::directory_iterator end_iter;
@@ -49,19 +48,19 @@ int Directory::_getFiles(std::string dir){
             if ( boost::filesystem::is_directory( dir_itr->status() ) ){
                 // Note, for path the "/" operator is overloaded to append to the path
                 directoryContents[directory_file].push_back(dir_itr->path());
-#ifdef GJS_DEBUG_PRINT
+#ifdef DEBUG
                 std::cout << dir_itr->path().filename() << " [directory]" << std::endl;
 #endif
             }
             else if ( boost::filesystem::is_regular_file( dir_itr->status() ) ){
                 directoryContents[regular_file].push_back(dir_itr->path());
-#ifdef GJS_DEBUG_PRINT
+#ifdef DEBUG
                 std::cout << "Found regular file: " << dir_itr->path().filename() << std::endl;
 #endif
             }
             else{
                 directoryContents[other_file].push_back(dir_itr->path());
-#ifdef GJS_DEBUG_PRINT
+#ifdef DEBUG
                 std::cout << dir_itr->path().filename() << " [other]" << std::endl;
 #endif
             }
