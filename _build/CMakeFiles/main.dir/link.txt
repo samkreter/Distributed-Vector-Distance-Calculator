@@ -1,0 +1,1 @@
+mpicxx   --std=c++11 -g -Werror   CMakeFiles/main.dir/main.cpp.o  -o main -rdynamic -lboost_filesystem-mt -lboost_thread-mt -lboost_system-mt 

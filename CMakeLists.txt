@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.8)
 project (Distributed-Vector-Compare)
 
+SET(CMAKE_CXX_COMPILER mpicxx)
+
 set(CMAKE_CXX_FLAGS "--std=c++11 -g -Werror")
 
 set(Boost_USE_STATIC_LIBS OFF)
