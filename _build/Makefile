@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named directory
+
+# Build rule for target.
+directory: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 directory
+.PHONY : directory
+
+# fast build rule for target.
+directory/fast:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/build
+.PHONY : directory/fast
+
+#=============================================================================
 # Target rules for targets named main
 
 # Build rule for target.
@@ -150,6 +163,33 @@ main.cpp.s:
 	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/Directory.o: src/Directory.cpp.o
+
+.PHONY : src/Directory.o
+
+# target to build an object file
+src/Directory.cpp.o:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/src/Directory.cpp.o
+.PHONY : src/Directory.cpp.o
+
+src/Directory.i: src/Directory.cpp.i
+
+.PHONY : src/Directory.i
+
+# target to preprocess a source file
+src/Directory.cpp.i:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/src/Directory.cpp.i
+.PHONY : src/Directory.cpp.i
+
+src/Directory.s: src/Directory.cpp.s
+
+.PHONY : src/Directory.s
+
+# target to generate assembly for a file
+src/Directory.cpp.s:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/src/Directory.cpp.s
+.PHONY : src/Directory.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -159,9 +199,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... main"
+	@echo "... directory"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/Directory.o"
+	@echo "... src/Directory.i"
+	@echo "... src/Directory.s"
 .PHONY : help
 
 

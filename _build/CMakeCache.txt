@@ -204,6 +204,9 @@ Distributed-Vector-Compare_BINARY_DIR:STATIC=/threads/home/stud6/Distributed-Vec
 //Value Computed by CMake
 Distributed-Vector-Compare_SOURCE_DIR:STATIC=/threads/home/stud6/Distributed-Vector-Distance-Calculator
 
+//Dependencies for target
+directory_LIB_DEPENDS:STATIC=
+
 
 ########################
 # INTERNAL cache entries

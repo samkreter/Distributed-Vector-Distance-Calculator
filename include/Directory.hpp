@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <boost/filesystem.hpp>
+#include <map>
+#include <sstream>
 
 // See the boost documentation for the filesystem
 // Especially: http://www.boost.org/doc/libs/1_41_0/libs/filesystem/doc/reference.html#Path-decomposition-table
@@ -17,6 +19,6 @@ public:
 
 private:
     std::map<std::string,path_list_type> _dirContents;
-    int _getFiles();
+    int _getFiles(std::string);
 
 };

@@ -60,13 +60,50 @@ CMAKE_SOURCE_DIR = /threads/home/stud6/Distributed-Vector-Distance-Calculator
 CMAKE_BINARY_DIR = /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build
 
 #=============================================================================
+# Target rules for target CMakeFiles/directory.dir
+
+# All Build rule for target.
+CMakeFiles/directory.dir/all:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/depend
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles --progress-num=1,2 "Built target directory"
+.PHONY : CMakeFiles/directory.dir/all
+
+# Include target in all.
+all: CMakeFiles/directory.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/directory.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/directory.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles 0
+.PHONY : CMakeFiles/directory.dir/rule
+
+# Convenience name for target.
+directory: CMakeFiles/directory.dir/rule
+
+.PHONY : directory
+
+# clean rule for target.
+CMakeFiles/directory.dir/clean:
+	$(MAKE) -f CMakeFiles/directory.dir/build.make CMakeFiles/directory.dir/clean
+.PHONY : CMakeFiles/directory.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/directory.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/main.dir
 
 # All Build rule for target.
-CMakeFiles/main.dir/all:
+CMakeFiles/main.dir/all: CMakeFiles/directory.dir/all
 	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/depend
 	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles --progress-num=1,2 "Built target main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles --progress-num=3,4 "Built target main"
 .PHONY : CMakeFiles/main.dir/all
 
 # Include target in all.
@@ -76,7 +113,7 @@ all: CMakeFiles/main.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/main.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles 4
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/main.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles 0
 .PHONY : CMakeFiles/main.dir/rule

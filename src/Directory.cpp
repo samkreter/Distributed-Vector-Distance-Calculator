@@ -1,9 +1,11 @@
+#include "../include/Directory.hpp"
 
-Directory::Directory(std::string dirPath):{
+Directory::Directory(std::string dirPath){
     if(!this->_getFiles(dirPath)){
-        std::err<<"File path doens't exist"<<std::endl;
+        std::cerr<<"File path doens't exist"<<std::endl;
     }
 }
+
 
 int Directory::_getFiles(std::string dir){
     // Define my map keys
@@ -24,13 +26,13 @@ int Directory::_getFiles(std::string dir){
     // Verify existence and directory status
     if ( !boost::filesystem::exists( dirPath ) ){
         std::stringstream msg;
-        msg << "Error: " << dirPath.file_string() << " does not exist " << std::endl;
+        msg << "Error: " << dirPath.string() << " does not exist " << std::endl;
         throw std::runtime_error(msg.str());
     }
 
     if ( !boost::filesystem::is_directory( dirPath ) ){
         std::stringstream msg;
-        msg << "Error: " << dirPath.file_string() << " is not a directory " << std::endl;
+        msg << "Error: " << dirPath.string() << " is not a directory " << std::endl;
         throw std::runtime_error(msg.str());
     }
 
