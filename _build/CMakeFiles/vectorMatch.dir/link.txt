@@ -1,0 +1,2 @@
+/usr/bin/ar cq libvectorMatch.a  CMakeFiles/vectorMatch.dir/src/vectorMatch.cpp.o
+/usr/bin/ranlib libvectorMatch.a

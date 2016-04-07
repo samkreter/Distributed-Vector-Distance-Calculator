@@ -22,6 +22,28 @@ boost/filesystem/operations.hpp
 boost/filesystem/path.hpp
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/include/boost/filesystem/path.hpp
 
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/parser.hpp
+iostream
+-
+vector
+-
+map
+-
+fstream
+-
+memory
+-
+sstream
+-
+iterator
+-
+memory
+-
+chrono
+-
+cfloat
+-
+
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/main.cpp
 iostream
 -
@@ -31,8 +53,14 @@ vector
 -
 string
 -
+memory
+-
+chrono
+-
 mpi.h
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/mpi.h
 include/Directory.hpp
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/include/Directory.hpp
+include/parser.hpp
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/parser.hpp
 

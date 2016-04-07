@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/parser.hpp
+iostream
+-
+vector
+-
+map
+-
+fstream
+-
+memory
+-
+sstream
+-
+iterator
+-
+memory
+-
+chrono
+-
+cfloat
+-
+
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/src/parser.cpp
+../include/parser.hpp
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/include/parser.hpp
+

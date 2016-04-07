@@ -15,4 +15,5 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
   "/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles/directory.dir/DependInfo.cmake"
+  "/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles/parser.dir/DependInfo.cmake"
   )

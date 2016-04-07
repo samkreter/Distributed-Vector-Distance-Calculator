@@ -1,9 +1,10 @@
 cmake_minimum_required (VERSION 2.8)
 project (Distributed-Vector-Compare)
 
+set(CMAKE_CXX_FLAGS "--std=c++11 -g -Werror")
+
 SET(CMAKE_CXX_COMPILER mpicxx)
 
-set(CMAKE_CXX_FLAGS "--std=c++11 -g -Werror")
 
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
@@ -14,9 +15,10 @@ if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 
     add_library(directory src/Directory.cpp)
+    add_library(parser src/parser.cpp)
 
     add_executable(main main.cpp)
-    target_link_libraries(main ${Boost_LIBRARIES} directory)
+    target_link_libraries(main ${Boost_LIBRARIES} directory parser)
 endif()
 
 message(AUTHOR_WARNING:"If you see 'Could NOT find Boost' then you must install boost for this to work")

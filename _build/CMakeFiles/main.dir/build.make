@@ -94,6 +94,7 @@ main: /usr/lib64/libboost_filesystem-mt.so
 main: /usr/lib64/libboost_thread-mt.so
 main: /usr/lib64/libboost_system-mt.so
 main: libdirectory.a
+main: libparser.a
 main: CMakeFiles/main.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)

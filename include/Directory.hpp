@@ -11,11 +11,13 @@
 #include "boost/filesystem/path.hpp"
 
 class Directory{
+
 public:
     typedef std::list<boost::filesystem::path> path_list_type;
 
     Directory(std::string dirPath);
     void print_dir();
+    std::vector<std::string> get_files();
 
 private:
     std::map<std::string,path_list_type> _dirContents;

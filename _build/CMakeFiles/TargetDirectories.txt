@@ -1,2 +1,3 @@
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles/main.dir
+/threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles/parser.dir
 /threads/home/stud6/Distributed-Vector-Distance-Calculator/_build/CMakeFiles/directory.dir

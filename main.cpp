@@ -2,15 +2,22 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <memory>
+#include <chrono>
 
 #include "mpi.h"
 #include "include/Directory.hpp"
 #include "include/parser.hpp"
 
+#define MAX_MSG_SIZE 100
+#define TERMINATE 0
+#define FILENAME 1
+#define CMPVECTOR 2
 
-int sendWork();
+int sendWork(std::vector<std::string> fileNames);
 int doWork();
-float findDist(long start1, long start2);
+float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
+    int startPos,std::vector<float> cmpVec);
 
 using MapString_t = std::map<std::string,long>;
 
@@ -24,10 +31,7 @@ int main(int argc, char * argv[])
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    Directory dir("./");
-
-    dir.print_dir();
-
+    Directory dir("/cluster_dev");
 
     // Master
     if (rank == 0)
@@ -44,7 +48,7 @@ int main(int argc, char * argv[])
         // }
 
 
-
+        sendWork(dir.get_files());
 
 
 
@@ -57,6 +61,7 @@ int main(int argc, char * argv[])
         // ++++++++++++++++++++++++++++++
         // Workers
         // ++++++++++++++++++++++++++++++
+        doWork();
 
         //used for the barrier in master
         //MPI_Barrier(MPI_COMM_WORLD);
@@ -69,54 +74,108 @@ int main(int argc, char * argv[])
 
 } // END of main
 
-int sendWork(){
+int sendWork(std::vector<std::string> fileNames){
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
 
-    std::map<std::string,int> bookCounterResult;
-
-
-    scottgs::book_type::const_iterator verse = book.begin();
+    std::vector<std::string>::iterator currFile = fileNames.begin();
 
     // Start with 1, because the master is =0
-    for (int rank = 1; rank < threadCount && verse!=book.end(); ++rank, ++verse)
-    {
-        // work tag / index
-        int index = verse->first;
-
-        const std::string line(verse->second);
-        const size_t length = line.size();
-        char msg[scottgs::LINE_MESSAGE_SIZE];
-        line.copy(msg,length);
+    for (int rank = 1;
+     rank < threadCount && currFile != fileNames.end();
+     ++rank, ++currFile){
+        const size_t length = (*currFile).size();
+        char msg[MAX_MSG_SIZE];
+        (*currFile).copy(msg,length);
         msg[length] = '\0';
 
         MPI_Send(msg,           /* message buffer */
-             scottgs::LINE_MESSAGE_SIZE,            /* buffer size */
+             MAX_MSG_SIZE,      /* buffer size */
              MPI_CHAR,          /* data item is an integer */
              rank,              /* destination process rank */
-             index,         /* user chosen message tag */
+             FILENAME,         /* user chosen message tag */
              MPI_COMM_WORLD);   /* default communicator */
 
 
     }
+
+    for (int rank = 1; rank < threadCount; ++rank) {
+        MPI_Send(0, 0, MPI_INT, rank, TERMINATE, MPI_COMM_WORLD);
+    }
+
+    return 1;
 }
 
 int doWork(){
 
-    shared_ptr<MapString_t> nameMap(new MapString_t);
-    shared_ptr<vector<float>> dataVector(new vector<float>);
-    Parser p(nameMap,dataVector);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    char msg[MAX_MSG_SIZE];
+    MPI_Status status;
+
+
+    while (1) {
+        // Receive a message from the master
+        MPI_Recv(msg,           /* message buffer */
+            MAX_MSG_SIZE,     /* buffer size */
+            MPI_CHAR,       /* data item is an integer */
+            0,              /* Receive from master */
+            MPI_ANY_TAG,
+                MPI_COMM_WORLD,     /* default communicator */
+                &status);
+
+        // Check if we have been terminated by the master
+        // exit from the worker loop
+        if (status.MPI_TAG == TERMINATE) {
+            std::cout << "scottgs::verseCounter["<< rank << "], recieved terminate signal" << std::endl;
+            return 0;
+        }
+
+        std::cout<<msg<<" Rank: "<<rank<<std::endl;
+    }
+
+    // std::chrono::duration<double> read_time_elapse;
+
+    // std::shared_ptr<MapString_t> nameMap(new MapString_t);
+    // std::map<float,std::string> results;
+    // std::shared_ptr<std::vector<float>> dataVector(new std::vector<float>);
+    // Parser p(nameMap,dataVector);
+
+    // std::string filename("hey");
+    // std::vector<float> cmpVec;
+
+    // if(p.parse_file(filename,&read_time_elapse)){
+    //     int lineLength = p.get_line_length();
+    //     for(auto& file : *nameMap){
+    //         results.insert(std::pair<float,std::string>(
+    //             findDist(lineLength,dataVector,file.second,cmpVec),
+    //             file.first));
+    //     }
+
+    //     return 1;
+    // }
+
+    return 0;
+
 }
 
-float findDist(long start1, long start2){
+float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,int startPos,std::vector<float> cmpVec){
 
     float sum = 0;
 
     //run the l1 norm formula
     for(int i = 0; i < lineLength; i++){
-        sum += std::fabs(rawData[(start1+i)] - rawData[ROWMATRIXPOS(lineLength,start2,i)]);
+        sum += std::fabs((*rawData)[(startPos+i)] - cmpVec.at(i));
     }
 
     return sum / (float) lineLength;
 
 }
+
+
+
+
+
+
+

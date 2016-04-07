@@ -207,6 +207,12 @@ Distributed-Vector-Compare_SOURCE_DIR:STATIC=/threads/home/stud6/Distributed-Vec
 //Dependencies for target
 directory_LIB_DEPENDS:STATIC=
 
+//Dependencies for target
+parser_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+vectorMatch_LIB_DEPENDS:STATIC=
+
 
 ########################
 # INTERNAL cache entries
