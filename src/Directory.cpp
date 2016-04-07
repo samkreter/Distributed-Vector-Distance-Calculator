@@ -22,7 +22,7 @@ std::vector<std::string> Directory::get_files(){
     for(auto& file : this->_dirContents){
         if(file.first == std::string("REGULAR")){
             for(auto& name : file.second){
-                names.push_back(name.filename().string());
+                names.push_back(name.string());
             }
         }
     }

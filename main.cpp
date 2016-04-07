@@ -50,8 +50,9 @@ int main(int argc, char * argv[])
         //     return 1;
         // }
 
-
-        sendWork(dir.get_files());
+        auto test = dir.get_files();
+        test.resize(2);
+        sendWork(test);
 
 
 
@@ -78,6 +79,7 @@ int main(int argc, char * argv[])
 } // END of main
 
 int sendWork(std::vector<std::string> fileNames){
+
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
 
@@ -156,6 +158,8 @@ int doWork(){
     char msg[MAX_MSG_SIZE];
     MPI_Status status;
 
+    std::chrono::duration<double> read_time_elapse;
+
 
     while (1) {
         // Receive a message from the master
@@ -174,7 +178,34 @@ int doWork(){
             return 0;
         }
 
+
         std::cout<<msg<<" Rank: "<<rank<<std::endl;
+
+
+        std::shared_ptr<MapString_t> nameMap(new MapString_t);
+        std::map<float,std::string> results;
+        std::shared_ptr<std::vector<float>> dataVector(new std::vector<float>);
+        Parser p(nameMap,dataVector);
+
+        std::vector<float> cmpVec;
+
+        if(!p.parse_file(msg,&read_time_elapse)){
+            std::cerr<<"could not parse file: "<<msg<<std::endl;
+            return 0;
+        }
+
+        int lineLength = p.get_line_length();
+        for(auto& file : *nameMap){
+            results.insert(std::pair<float,std::string>(
+                findDist(lineLength,dataVector,file.second,*dataVector),
+                file.first));
+        }
+
+        for(auto& el : results){
+            std::cout<<el.first<<":"<<el.second<<std::endl;
+        }
+
+
 
         const std::string result("Im done bro");
         const size_t length = result.size();
@@ -190,26 +221,11 @@ int doWork(){
              MPI_COMM_WORLD);
     }
 
-    // std::chrono::duration<double> read_time_elapse;
 
-    // std::shared_ptr<MapString_t> nameMap(new MapString_t);
-    // std::map<float,std::string> results;
-    // std::shared_ptr<std::vector<float>> dataVector(new std::vector<float>);
-    // Parser p(nameMap,dataVector);
 
-    // std::string filename("hey");
-    // std::vector<float> cmpVec;
 
-    // if(p.parse_file(filename,&read_time_elapse)){
-    //     int lineLength = p.get_line_length();
-    //     for(auto& file : *nameMap){
-    //         results.insert(std::pair<float,std::string>(
-    //             findDist(lineLength,dataVector,file.second,cmpVec),
-    //             file.first));
-    //     }
 
-    //     return 1;
-    // }
+
 
     return 0;
 
@@ -218,10 +234,9 @@ int doWork(){
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,int startPos,std::vector<float> cmpVec){
 
     float sum = 0;
-
     //run the l1 norm formula
     for(int i = 0; i < lineLength; i++){
-        sum += std::fabs((*rawData)[(startPos+i)] - cmpVec.at(i));
+        sum += std::fabs((*rawData).at(startPos+i) - cmpVec.at(i));
     }
 
     return sum / (float) lineLength;
