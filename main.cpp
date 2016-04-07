@@ -10,9 +10,12 @@
 #include "include/parser.hpp"
 
 #define MAX_MSG_SIZE 100
+#define MAX_RESULT_SIZE 100
+
 #define TERMINATE 0
 #define FILENAME 1
 #define CMPVECTOR 2
+#define RESULTS 3
 
 int sendWork(std::vector<std::string> fileNames);
 int doWork();
@@ -99,9 +102,48 @@ int sendWork(std::vector<std::string> fileNames){
 
     }
 
+    for ( ;currFile != fileNames.end(); ++currFile) {
+
+        // Receive results from a worker
+        char resultMsg[MAX_RESULT_SIZE];
+        MPI_Status status;
+
+        // Receive a message from the worker
+        MPI_Recv(resultMsg,             /* message buffer */
+            MAX_RESULT_SIZE,   /* buffer size */
+            MPI_CHAR,       /* data item is an integer */
+            MPI_ANY_SOURCE,     /* Recieve from thread */
+            MPI_ANY_TAG,        /* tag */
+                MPI_COMM_WORLD,     /* default communicator */
+                &status);
+
+        //const int incomingIndex = status.MPI_TAG;
+        const int sourceCaught = status.MPI_SOURCE;
+
+
+        const size_t length = (*currFile).size();
+        char msg[MAX_MSG_SIZE];
+        (*currFile).copy(msg,length);
+        msg[length] = '\0';
+
+        MPI_Send(msg,       /* message buffer */
+             MAX_MSG_SIZE,   /* buffer size */
+             MPI_CHAR,      /* data item is an integer */
+             sourceCaught,  /* destination process rank */
+             FILENAME, /* user chosen message tag */
+             MPI_COMM_WORLD);   /* default communicator */
+
+    }
+
+
+
+
     for (int rank = 1; rank < threadCount; ++rank) {
         MPI_Send(0, 0, MPI_INT, rank, TERMINATE, MPI_COMM_WORLD);
     }
+
+
+
 
     return 1;
 }
@@ -128,11 +170,24 @@ int doWork(){
         // Check if we have been terminated by the master
         // exit from the worker loop
         if (status.MPI_TAG == TERMINATE) {
-            std::cout << "scottgs::verseCounter["<< rank << "], recieved terminate signal" << std::endl;
+            std::cout<< rank << " recieved terminate signal" << std::endl;
             return 0;
         }
 
         std::cout<<msg<<" Rank: "<<rank<<std::endl;
+
+        const std::string result("Im done bro");
+        const size_t length = result.size();
+        char resultMsg[MAX_RESULT_SIZE];
+        result.copy(resultMsg,length);
+        resultMsg[length] = '\0';
+
+        MPI_Send(resultMsg,           /* message buffer */
+             MAX_RESULT_SIZE,         /* buffer size */
+             MPI_CHAR,              /* data item is an integer */
+             0,                     /* destination process rank, the master */
+             RESULTS,             /* user chosen message tag */
+             MPI_COMM_WORLD);
     }
 
     // std::chrono::duration<double> read_time_elapse;
