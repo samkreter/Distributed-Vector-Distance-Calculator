@@ -6,6 +6,7 @@ Directory::Directory(std::string dirPath){
     }
 }
 
+
 void Directory::print_dir(){
     for(auto& file : this->_dirContents){
         std::cout<<file.first<<std::endl;
@@ -15,6 +16,8 @@ void Directory::print_dir(){
         std::cout<<std::endl;
     }
 }
+
+
 
 int Directory::_getFiles(std::string dir){
     // Define my map keys
