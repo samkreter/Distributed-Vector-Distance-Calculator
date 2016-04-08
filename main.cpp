@@ -25,6 +25,8 @@ typedef struct result{
     char fileName[MAX_MSG_SIZE];
 }result_t;
 
+int output_result_vector_to_file(std::string filename, std::vector<result_t>* vec);
+int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
 bool resultPairSort(const result_t& pair1, const result_t& pair2);
 int createMPIResultStruct(MPI_Datatype* ResultMpiType);
 int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int k);
@@ -100,7 +102,9 @@ int main(int argc, char* argv[]){
     //Shut down MPI
     MPI_Finalize();
 
-    return 0;
+    output_result_vector_to_file("results.csv", finalResults);
+
+    return 1;
 
 } // END of main
 
@@ -140,7 +144,8 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
         MPI_Status status;
 
         std::cout << "waiting to recieve" << std::endl;
-        // Receive a message from the worker
+
+        // Receive the result array from the worker
         MPI_Recv(&resultMsg,             /* message buffer */
             MAX_RESULT_SIZE,   /* buffer size */
             *ResultMpiType,       /* data item is an integer */
@@ -182,13 +187,14 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
         MPI_Status status;
 
         std::cout << "waiting to recieve1" << std::endl;
-        // Receive a message from the worker
-        MPI_Recv(&resultMsg,             /* message buffer */
-            MAX_RESULT_SIZE,   /* buffer size */
-            *ResultMpiType,       /* data item is an integer */
-            MPI_ANY_SOURCE,     /* Recieve from thread */
-            MPI_ANY_TAG,        /* tag */
-                MPI_COMM_WORLD,     /* default communicator */
+
+        // Receive the result array from the worker
+        MPI_Recv(&resultMsg,
+            MAX_RESULT_SIZE,
+            *ResultMpiType,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+                MPI_COMM_WORLD,
                 &status);
         fileCount--;
 
@@ -203,7 +209,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
     }
 
 
-
+    //let the workers know their off shift, so relax and have a beer
     for (int rank = 1; rank < threadCount; ++rank) {
         MPI_Send(0, 0, MPI_INT, rank, TERMINATE, MPI_COMM_WORLD);
     }
@@ -338,7 +344,51 @@ float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,int st
 
 }
 
+int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append){
+    std::fstream outputFile;
+    std::ostringstream ossVec;
 
+    if(append == 0){
+        outputFile.open(filename,std::fstream::out);
+    }
+    else{
+        outputFile.open(filename, std::fstream::out | std::fstream::app);
+    }
+
+    if(outputFile.is_open()){
+        vec.insert(vec.begin(),POSITION);
+
+        std::copy(vec.begin(), vec.end()-1,
+        std::ostream_iterator<float>(ossVec, ","));
+        ossVec << vec.back();
+        outputFile<<ossVec.str()<<"\n";
+
+        outputFile.close();
+        return 1;
+    }
+    return 0;
+}
+
+/// print the vectors to a file, for the final output
+int output_result_vector_to_file(std::string filename, std::vector<result_t>* vec){
+
+    std::ofstream outputFile(filename);
+    std::ostringstream ossVec;
+
+
+    if(outputFile.is_open()){
+
+        for(auto& elem : *vec){
+            ossVec<<elem.filename<<","<<elem.distance<<std::endl;
+        }
+
+        outputFile<<ossVec.str();
+
+        outputFile.close();
+        return 1;
+    }
+    return 0;
+}
 
 
 
