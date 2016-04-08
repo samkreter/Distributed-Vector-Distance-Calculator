@@ -1,9 +1,10 @@
 #include "../include/Directory.hpp"
 
-Directory::Directory(std::string dirPath){
-    if(!this->_getFiles(dirPath)){
-        std::cerr<<"File path doens't exist"<<std::endl;
+int Directory::set_path(std::string dirPath){
+    if(this->_getFiles(dirPath)){
+        return 1;
     }
+    return 0;
 }
 
 
@@ -52,13 +53,13 @@ int Directory::_getFiles(std::string dir){
     if ( !boost::filesystem::exists( dirPath ) ){
         std::stringstream msg;
         msg << "Error: " << dirPath.string() << " does not exist " << std::endl;
-        throw std::runtime_error(msg.str());
+        return 0;
     }
 
     if ( !boost::filesystem::is_directory( dirPath ) ){
         std::stringstream msg;
         msg << "Error: " << dirPath.string() << " is not a directory " << std::endl;
-        throw std::runtime_error(msg.str());
+        return 0;
     }
 
 #ifdef DEBUG

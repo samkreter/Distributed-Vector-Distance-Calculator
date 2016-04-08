@@ -15,7 +15,7 @@ class Directory{
 public:
     typedef std::list<boost::filesystem::path> path_list_type;
 
-    Directory(std::string dirPath);
+    int set_path(std::string dirPath);
     void print_dir();
     std::vector<std::string> get_files();
 

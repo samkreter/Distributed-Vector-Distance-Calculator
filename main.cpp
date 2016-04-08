@@ -7,25 +7,30 @@
 #include <string.h>
 #include <sstream>
 
+//where the real magic comes from
 #include "mpi.h"
+
+//custom header files
 #include "include/Directory.hpp"
 #include "include/parser.hpp"
 #include "include/timing.hpp"
 
+//message size standards
 #define MAX_MSG_SIZE 100
-#define MAX_RESULT_SIZE 10
+#define MAX_RESULT_SIZE 2000
 
 //tags for OpenMPI
 #define TERMINATE 0
 #define FILENAME 1
 #define CMPVECTOR 2
 #define RESULTS 3
-#define KVALUE 4
 
+//final results stucture
 typedef struct result{
     float distance;
     char fileName[MAX_MSG_SIZE];
 }result_t;
+
 
 int output_result_vector_to_file(std::string filename, std::vector<result_t>* vec);
 int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
@@ -36,6 +41,8 @@ int doWork(MPI_Datatype* ResultMpiType,const int k);
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
     int startPos,std::vector<float> cmpVec);
 
+
+//used for the parsing convertions
 using MapString_t = std::map<std::string,long>;
 
 
@@ -46,12 +53,17 @@ int main(int argc, char* argv[]){
     MPI_Init(&argc, &argv);
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    //used to store the final results
     std::vector<result_t> finalResults;
+    //init the k value
     int k = 0;
+    //init the custom openmpi datatype
     MPI_Datatype ResultMpiType;
+    //wrapper function to set up the custom type
     createMPIResultStruct(&ResultMpiType);
 
-    Directory dir("/cluster_dev");
+
 
     // Master
     if (rank == 0){
@@ -63,6 +75,21 @@ int main(int argc, char* argv[]){
         if (argc < 2){
             std::cout << "Usage: " << argv[0] << " [k value]" << std::endl;
             return 0;
+        }
+
+        std::string folderPath;
+        std::cout<<"Please enter the folder path for the data, hit enter for default [/cluster_dev]:";
+        getline(std::cin,folderPath);
+
+        if(folderPath.size() == 0){
+            folderPath = "/cluster_dev";
+        }
+
+        Directory dir;
+
+        while(!dir.set_path(folderPath)){
+            std::cout<<"Datafolder could not be found, please re-endter the folder path: ";
+            getline(std::cin,folderPath);
         }
 
 
@@ -143,8 +170,6 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
         result_t resultMsg[MAX_RESULT_SIZE];
         MPI_Status status;
 
-        std::cout << "waiting to recieve" << std::endl;
-
         // Receive the result array from the worker
         MPI_Recv(&resultMsg,             /* message buffer */
             MAX_RESULT_SIZE,   /* buffer size */
@@ -154,15 +179,19 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
                 MPI_COMM_WORLD,     /* default communicator */
                 &status);
         fileCount--;
-        std::cout<<"recesived result: "<< resultMsg[0].distance << std::endl;
+
+
+        //const int incomingIndex = status.MPI_TAG;
+        const int sourceCaught = status.MPI_SOURCE;
+
+        std::cout<<"recesived result: "<< resultMsg[0].distance << "from: "<<sourceCaught << std::endl;
 
         //merge results
         finalResults->insert(finalResults->end(),resultMsg,resultMsg+k);
         std::sort(finalResults->begin(),finalResults->end(),resultPairSort);
         finalResults->resize(k);
 
-        //const int incomingIndex = status.MPI_TAG;
-        const int sourceCaught = status.MPI_SOURCE;
+
 
 
         const size_t length = (*currFile).size();
@@ -185,8 +214,6 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
         // Receive results from a worker
         result_t resultMsg[MAX_RESULT_SIZE];
         MPI_Status status;
-
-        std::cout << "waiting to recieve1" << std::endl;
 
         // Receive the result array from the worker
         MPI_Recv(&resultMsg,
@@ -267,7 +294,6 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
             std::cerr<<"could not parse file: "<<msg<<std::endl;
             return 0;
         }
-        std::cout << "finished parsing the file" << std::endl;
 
         int lineLength = p.get_line_length();
         int index = 0;
@@ -279,14 +305,12 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
             index++;
         }
 
-        std::cout << "finished finding distances" << std::endl;
 
         std::sort(results.begin(),results.end(),resultPairSort);
 
 
         results.resize(MAX_RESULT_SIZE);
-        std::cout<<std::endl;
-        std::cout << "sending the final results" << std::endl;
+
 
 
         MPI_Send(results.data(),           /* message buffer */
