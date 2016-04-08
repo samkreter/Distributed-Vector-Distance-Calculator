@@ -5,6 +5,7 @@
 #include <memory>
 #include <chrono>
 #include <string.h>
+#include <sstream>
 
 #include "mpi.h"
 #include "include/Directory.hpp"
@@ -29,8 +30,8 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
 int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
 bool resultPairSort(const result_t& pair1, const result_t& pair2);
 int createMPIResultStruct(MPI_Datatype* ResultMpiType);
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int k);
-int doWork(MPI_Datatype* ResultMpiType,int k);
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults);
+int doWork(MPI_Datatype* ResultMpiType,const int k);
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
     int startPos,std::vector<float> cmpVec);
 
@@ -43,10 +44,9 @@ int main(int argc, char* argv[]){
     // Find out my identity in the default communicator
     MPI_Init(&argc, &argv);
     int rank;
-    int k = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-
+    std::vector<result_t> finalResults;
+    int k = 0;
     MPI_Datatype ResultMpiType;
     createMPIResultStruct(&ResultMpiType);
 
@@ -79,12 +79,12 @@ int main(int argc, char* argv[]){
 
         auto test = dir.get_files();
         test.resize(2);
-        sendWork(test,&ResultMpiType,k);
+        sendWork(test,&ResultMpiType,k,&finalResults);
 
 
 
         //wait for the workers to finish to collect the results
-        //MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
 
     }
     else{
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]){
         doWork(&ResultMpiType,k);
 
         //used for the barrier in master
-        //MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     MPI_Type_free(&ResultMpiType);
@@ -102,18 +102,17 @@ int main(int argc, char* argv[]){
     //Shut down MPI
     MPI_Finalize();
 
-    output_result_vector_to_file("results.csv", finalResults);
+    output_result_vector_to_file("results.csv", &finalResults);
 
     return 1;
 
 } // END of main
 
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int k){
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults){
 
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
     int fileCount = 0;
-    std::vector<result_t> finalResults;
 
 
     std::vector<std::string>::iterator currFile = fileNames.begin();
@@ -157,9 +156,9 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
         std::cout<<"recesived result: "<< resultMsg[0].distance << std::endl;
 
         //merge results
-        finalResults.insert(finalResults.end(),resultMsg,resultMsg+k);
-        std::sort(finalResults.begin(),finalResults.end(),resultPairSort);
-        finalResults.resize(k);
+        finalResults->insert(finalResults->end(),resultMsg,resultMsg+k);
+        std::sort(finalResults->begin(),finalResults->end(),resultPairSort);
+        finalResults->resize(k);
 
         //const int incomingIndex = status.MPI_TAG;
         const int sourceCaught = status.MPI_SOURCE;
@@ -199,9 +198,9 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
         fileCount--;
 
                 //merge results
-        finalResults.insert(finalResults.end(),resultMsg,resultMsg+k);
-        std::sort(finalResults.begin(),finalResults.end(),resultPairSort);
-        finalResults.resize(k);
+        finalResults->insert(finalResults->end(),resultMsg,resultMsg+k);
+        std::sort(finalResults->begin(),finalResults->end(),resultPairSort);
+        finalResults->resize(k);
 
         const int sourceCaught = status.MPI_SOURCE;
         std::cout<<"recesived result: "<< resultMsg[0].distance << "from: "<<sourceCaught << std::endl;
@@ -214,9 +213,6 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,int 
         MPI_Send(0, 0, MPI_INT, rank, TERMINATE, MPI_COMM_WORLD);
     }
 
-
-
-
     return 1;
 }
 
@@ -225,7 +221,7 @@ bool resultPairSort(const result_t& pair1, const result_t& pair2){
     return pair1.distance < pair2.distance;
 }
 
-int doWork(MPI_Datatype* ResultMpiType,int k){
+int doWork(MPI_Datatype* ResultMpiType,const int k){
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -356,7 +352,10 @@ int output_timing_vector_to_file(std::string filename, std::vector<double> vec, 
     }
 
     if(outputFile.is_open()){
+
+#ifdef POSITION
         vec.insert(vec.begin(),POSITION);
+#endif
 
         std::copy(vec.begin(), vec.end()-1,
         std::ostream_iterator<float>(ossVec, ","));
@@ -371,7 +370,7 @@ int output_timing_vector_to_file(std::string filename, std::vector<double> vec, 
 
 /// print the vectors to a file, for the final output
 int output_result_vector_to_file(std::string filename, std::vector<result_t>* vec){
-
+    std::cout<<"writing files"<<std::endl;
     std::ofstream outputFile(filename);
     std::ostringstream ossVec;
 
@@ -379,7 +378,7 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
     if(outputFile.is_open()){
 
         for(auto& elem : *vec){
-            ossVec<<elem.filename<<","<<elem.distance<<std::endl;
+            ossVec<<elem.fileName<<","<<elem.distance<<std::endl;
         }
 
         outputFile<<ossVec.str();
@@ -387,6 +386,7 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
         outputFile.close();
         return 1;
     }
+    std::cout<<"no";
     return 0;
 }
 
