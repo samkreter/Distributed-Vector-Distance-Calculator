@@ -13,4 +13,6 @@ Running
 
 4. To run the program
 
-        t
+        mpirun -n [number of spawns] ./main [value for k]
+
+5. The top k results will be stored in results.csv in the _build directory
