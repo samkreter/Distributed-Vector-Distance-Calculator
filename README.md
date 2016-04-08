@@ -13,6 +13,6 @@ Running
 
 4. To run the program
 
-        mpirun -n [number of spawns] ./main [value for k] \ [filePath] \ [name of cmp vector]
+        mpirun -n [number of spawns] ./main [value for k] [filePath] [name of cmp vector]
 
 5. The top k results will be stored in results.csv in the _build directory
