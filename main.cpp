@@ -10,6 +10,7 @@
 #include "mpi.h"
 #include "include/Directory.hpp"
 #include "include/parser.hpp"
+#include "include/timing.hpp"
 
 #define MAX_MSG_SIZE 100
 #define MAX_RESULT_SIZE 10
@@ -386,7 +387,6 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
         outputFile.close();
         return 1;
     }
-    std::cout<<"no";
     return 0;
 }
 

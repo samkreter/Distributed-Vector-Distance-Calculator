@@ -16,9 +16,10 @@ if(Boost_FOUND)
 
     add_library(directory src/Directory.cpp)
     add_library(parser src/parser.cpp)
+    add_library(timing src/timing.cpp)
 
     add_executable(main main.cpp)
-    target_link_libraries(main ${Boost_LIBRARIES} directory parser)
+    target_link_libraries(main ${Boost_LIBRARIES} directory parser timing)
 endif()
 
 message(AUTHOR_WARNING:"If you see 'Could NOT find Boost' then you must install boost for this to work")
