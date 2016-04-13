@@ -85,23 +85,25 @@ int main(int argc, char* argv[]){
 
         // check the arugmumants
         if (argc < 2){
-            std::cout << "Usage: " << argv[0] << " [k value]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " [k value] [directory path:default(/cluster)]" << std::endl;
             return 0;
         }
 
         std::string folderPath;
-        std::cout<<"Please enter the folder path for the data, hit enter for default [/cluster_dev]:";
-        getline(std::cin,folderPath);
 
-        if(folderPath.size() == 0){
+        if(argc == 2){
             folderPath = "/cluster_dev";
         }
+        else{
+            folderPath = argv[2];
+        }
+
 
         Directory dir;
 
-        while(!dir.set_path(folderPath)){
-            std::cout<<"Datafolder could not be found, please re-endter the folder path: ";
-            getline(std::cin,folderPath);
+        if(!dir.set_path(folderPath)){
+            std::cerr<<"Directory either not found or not a directory"<<std::endl;
+            return 0;
         }
 
 
@@ -133,7 +135,7 @@ int main(int argc, char* argv[]){
             std::cerr << "Couldn't get the search vector" << std::endl;
             return 0;
         }
-
+        std::cout << "Sending work to workers" << std::endl;
         sendWork(test,&ResultMpiType,k,&finalResults,searchVector.data,timeResults);
 
 
