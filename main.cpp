@@ -20,6 +20,7 @@
 #define MAX_MSG_SIZE 100
 #define MAX_RESULT_SIZE 2000
 #define SEARCH_VECTOR_SIZE 4098
+#define NUM_TIME_RESULTS 3
 
 //tags for OpenMPI
 #define TERMINATE 0
@@ -27,6 +28,7 @@
 #define CMPVECTOR 2
 #define RESULTS 3
 #define SEARCH_VECTOR 4
+#define TIMING 5
 
 //final results stucture
 typedef struct result{
@@ -46,7 +48,8 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
 int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
 bool resultPairSort(const result_t& pair1, const result_t& pair2);
 int createMPIResultStruct(MPI_Datatype* ResultMpiType);
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults, std::vector<float>& searchVector);
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
+    const int k,std::vector<result_t>* finalResults, std::vector<float>& searchVector,double* timeResults);
 int doWork(MPI_Datatype* ResultMpiType,const int k);
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
     int startPos,float* cmpData);
@@ -117,6 +120,12 @@ int main(int argc, char* argv[]){
         auto test = dir.get_files();
         searchVector_t searchVector;
         Timing wallClock;
+        double timeResults[NUM_TIME_RESULTS];
+
+        //initlize timing holder
+        for(int i = 0; i < NUM_TIME_RESULTS; i++){
+            timeResults[i] = 0;
+        }
 
         wallClock.start();
         //get the first vector the first file in the the directory as the search vector
@@ -125,10 +134,7 @@ int main(int argc, char* argv[]){
             return 0;
         }
 
-
-        std::cout << "file list resize" << std::endl;
-        test.resize(2);
-        sendWork(test,&ResultMpiType,k,&finalResults,searchVector.data);
+        sendWork(test,&ResultMpiType,k,&finalResults,searchVector.data,timeResults);
 
 
 
@@ -137,6 +143,23 @@ int main(int argc, char* argv[]){
 
         wallClock.end();
         std::cout<<"wallClock time: "<<wallClock.get_elapse()<<std::endl;
+
+        //get com size for timming results
+        int threadCount;
+        MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
+
+        //creat a vector fromt the timing results
+        std::vector<double> finalTimingVec;
+
+        finalTimingVec.push_back(threadCount);
+        finalTimingVec.push_back(k);
+        finalTimingVec.push_back(wallClock.get_elapse());
+        finalTimingVec.insert(finalTimingVec.end(),timeResults,timeResults+NUM_TIME_RESULTS);
+
+        //output the timing vector to the timing for all the tests
+        output_timing_vector_to_file("times.csv",finalTimingVec,1);
+
+        //output the final results to a vector
         output_result_vector_to_file("results.csv", &finalResults);
     }
     else{
@@ -196,11 +219,13 @@ int getFirstVector(std::string filename,searchVector_t* returnData){
 }
 
 
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults,std::vector<float>& cmpVec){
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
+    const int k,std::vector<result_t>* finalResults,std::vector<float>& cmpVec,double* timeResults){
 
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
     int fileCount = 0;
+    double times[NUM_TIME_RESULTS];
 
 
     std::vector<std::string>::iterator currFile = fileNames.begin();
@@ -236,6 +261,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
         // Receive results from a worker
         result_t resultMsg[MAX_RESULT_SIZE];
         MPI_Status status;
+        MPI_Status statusT;
 
         // Receive the result array from the worker
         MPI_Recv(&resultMsg,             /* message buffer */
@@ -247,11 +273,21 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
                 &status);
         fileCount--;
 
+        MPI_Recv(times,
+            NUM_TIME_RESULTS,
+            MPI_DOUBLE,
+            MPI_ANY_SOURCE,
+            TIMING,
+            MPI_COMM_WORLD,
+            &statusT);
+
+        //sum up the timing results from all the workers
+        for(int i = 0; i < NUM_TIME_RESULTS; i++){
+            timeResults[i] += times[i];
+        }
 
         //const int incomingIndex = status.MPI_TAG;
         const int sourceCaught = status.MPI_SOURCE;
-
-        std::cout<<"recesived result: "<< resultMsg[0].distance << "from: "<<sourceCaught << std::endl;
 
         //merge results
         finalResults->insert(finalResults->end(),resultMsg,resultMsg+k);
@@ -281,6 +317,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
         // Receive results from a worker
         result_t resultMsg[MAX_RESULT_SIZE];
         MPI_Status status;
+        MPI_Status statusT;
 
         // Receive the result array from the worker
         MPI_Recv(&resultMsg,
@@ -292,14 +329,25 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
                 &status);
         fileCount--;
 
+        MPI_Recv(times,
+            NUM_TIME_RESULTS,
+            MPI_DOUBLE,
+            MPI_ANY_SOURCE,
+            TIMING,
+            MPI_COMM_WORLD,
+            &statusT);
+
+        //sum up the timing results from all the workers
+        for(int i = 0; i < NUM_TIME_RESULTS; i++){
+            timeResults[i] += times[i];
+        }
+
                 //merge results
         finalResults->insert(finalResults->end(),resultMsg,resultMsg+k);
         std::sort(finalResults->begin(),finalResults->end(),resultPairSort);
         finalResults->resize(k);
 
         const int sourceCaught = status.MPI_SOURCE;
-        std::cout<<"recesived result: "<< resultMsg[0].distance << "from: "<<sourceCaught << std::endl;
-
     }
 
     //let the workers know their off shift, so relax and have a beer
@@ -323,8 +371,13 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
 
     char msg[MAX_MSG_SIZE];
     float cmpData[SEARCH_VECTOR_SIZE];
+    double times[2];
     MPI_Status status;
+    Timing parserTime;
+    Timing searchTime;
+    Timing workWallTime;
 
+    workWallTime.start();
     std::chrono::duration<double> read_time_elapse;
 
     MPI_Recv(cmpData,
@@ -360,20 +413,18 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
         }
 
 
-        std::cout<<msg<<" Rank: "<<rank<<std::endl;
-
-
         std::shared_ptr<MapString_t> nameMap(new MapString_t);
         std::vector<result_t> results;
         std::shared_ptr<std::vector<float>> dataVector(new std::vector<float>);
         Parser p(nameMap,dataVector);
 
-
+        parserTime.start();
         if(!p.parse_file(msg,&read_time_elapse)){
             std::cerr<<"could not parse file: "<<msg<<std::endl;
             return 0;
         }
-
+        parserTime.end();
+        searchTime.start();
         int lineLength = p.get_line_length();
         int index = 0;
         for(auto& file : *nameMap){
@@ -390,7 +441,7 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
 
         results.resize(MAX_RESULT_SIZE);
 
-
+        searchTime.end();
 
         MPI_Send(results.data(),           /* message buffer */
              MAX_RESULT_SIZE,         /* buffer size */
@@ -398,7 +449,22 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
              0,                     /* destination process rank, the master */
              RESULTS,             /* user chosen message tag */
              MPI_COMM_WORLD);
-        std::cout << "sent final results: "<<rank << std::endl;
+
+        workWallTime.end();
+
+        //add the times to an array to be sent to the master
+        times[0] = parserTime.get_elapse();
+        times[1] = searchTime.get_elapse();
+        times[2] = workWallTime.get_elapse();
+
+        //send out the timing results to be compiled
+        MPI_Send(times,
+            NUM_TIME_RESULTS,
+            MPI_DOUBLE,
+            0,
+            TIMING,
+            MPI_COMM_WORLD);
+
     }
 
 
