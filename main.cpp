@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
     MPI_Datatype ResultMpiType;
     //wrapper function to set up the custom type
     createMPIResultStruct(&ResultMpiType);
-    bool testing = false;
+
 
 
 
@@ -116,7 +116,10 @@ int main(int argc, char* argv[]){
 
         auto test = dir.get_files();
         searchVector_t searchVector;
+        Timing wallClock;
 
+        wallClock.start();
+        //get the first vector the first file in the the directory as the search vector
         if(!getFirstVector(test.at(0),&searchVector)){
             std::cerr << "Couldn't get the search vector" << std::endl;
             return 0;
@@ -126,12 +129,15 @@ int main(int argc, char* argv[]){
         std::cout << "file list resize" << std::endl;
         test.resize(2);
         sendWork(test,&ResultMpiType,k,&finalResults,searchVector.data);
-        std::cout<<"out of send work"<<std::endl;
+
 
 
         //wait for the workers to finish to collect the results
         MPI_Barrier(MPI_COMM_WORLD);
-        testing = true;
+
+        wallClock.end();
+        std::cout<<"wallClock time: "<<wallClock.get_elapse()<<std::endl;
+        output_result_vector_to_file("results.csv", &finalResults);
     }
     else{
         // ++++++++++++++++++++++++++++++
@@ -146,10 +152,6 @@ int main(int argc, char* argv[]){
 
     //Shut down MPI
     MPI_Finalize();
-
-    if(testing){
-        output_result_vector_to_file("results.csv", &finalResults);
-    }
 
     return 1;
 

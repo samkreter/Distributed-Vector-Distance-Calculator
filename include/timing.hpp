@@ -1,12 +1,12 @@
 #include <chrono>
 
-class timing{
+class Timing{
 
 public:
 
     using timePoint_t = std::chrono::time_point<std::chrono::system_clock>;
 
-    timing();
+    Timing(){};
     void start();
     void end();
     double get_elapse();
