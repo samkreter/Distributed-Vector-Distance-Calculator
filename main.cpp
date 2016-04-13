@@ -6,6 +6,7 @@
 #include <chrono>
 #include <string.h>
 #include <sstream>
+#include <fstream>
 
 //where the real magic comes from
 #include "mpi.h"
@@ -31,6 +32,13 @@ typedef struct result{
     char fileName[MAX_MSG_SIZE];
 }result_t;
 
+//used for the parsing convertions
+using MapString_t = std::map<std::string,long>;
+using searchVector_t = struct {
+    std::string filename;
+    std::vector<float> data;
+};
+
 
 int output_result_vector_to_file(std::string filename, std::vector<result_t>* vec);
 int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
@@ -40,10 +48,8 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
 int doWork(MPI_Datatype* ResultMpiType,const int k);
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
     int startPos,std::vector<float> cmpVec);
+int getFirstVector(std::string filename, searchVector_t* returnVec);
 
-
-//used for the parsing convertions
-using MapString_t = std::map<std::string,long>;
 
 
 int main(int argc, char* argv[]){
@@ -106,6 +112,19 @@ int main(int argc, char* argv[]){
         }
 
         auto test = dir.get_files();
+        searchVector_t searchVector;
+
+        if(!getFirstVector(test.at(0),&searchVector)){
+            std::cerr << "Couldn't get the search vector" << std::endl;
+            return 0;
+        }
+        std::cout << searchVector.filename << std::endl;
+        for(int i = 0; i < 50; i++){
+            std::cout << searchVector.data.at(i);
+        }
+
+        return 0;
+        std::cout << "file list resize" << std::endl;
         test.resize(2);
         sendWork(test,&ResultMpiType,k,&finalResults);
 
@@ -135,6 +154,45 @@ int main(int argc, char* argv[]){
     return 1;
 
 } // END of main
+
+int getFirstVector(std::string filename,searchVector_t* returnData){
+    if(!filename.empty()){
+        std::ifstream csvFirstFile(filename);
+        if(csvFirstFile.is_open()){
+
+            std::string line;
+            std::string entryFName;
+
+            //read a line at a time from the file
+            std::getline(csvFirstFile,line);
+            std::stringstream lineStream(line);
+            std::string cell;
+
+            //get the filename for the map
+            std::getline(lineStream,entryFName,',');
+
+            //insert the file name as the key for a vector of floats into the map
+            returnData->filename = entryFName;
+
+            //use a string stream to separte the columns
+            while(std::getline(lineStream,cell,',')){
+                //I love try catches, that c++ life
+                try{
+                    returnData->data.push_back(std::stof(cell));
+                }
+                //not so good to just catch all but it'll have to do for now
+                catch(...){
+                    std::cerr<<"Could not convert string to float or rows are not the same length"<<std::endl;
+                    return 0;
+                }
+            }
+            return 1;
+
+        }
+    }
+    return 0;
+}
+
 
 int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults){
 
