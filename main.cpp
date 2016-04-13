@@ -19,12 +19,14 @@
 //message size standards
 #define MAX_MSG_SIZE 100
 #define MAX_RESULT_SIZE 2000
+#define SEARCH_VECTOR_SIZE 4098
 
 //tags for OpenMPI
 #define TERMINATE 0
 #define FILENAME 1
 #define CMPVECTOR 2
 #define RESULTS 3
+#define SEARCH_VECTOR 4
 
 //final results stucture
 typedef struct result{
@@ -44,10 +46,10 @@ int output_result_vector_to_file(std::string filename, std::vector<result_t>* ve
 int output_timing_vector_to_file(std::string filename, std::vector<double> vec, int append);
 bool resultPairSort(const result_t& pair1, const result_t& pair2);
 int createMPIResultStruct(MPI_Datatype* ResultMpiType);
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults);
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults, std::vector<float>& searchVector);
 int doWork(MPI_Datatype* ResultMpiType,const int k);
 float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,
-    int startPos,std::vector<float> cmpVec);
+    int startPos,float* cmpData);
 int getFirstVector(std::string filename, searchVector_t* returnVec);
 
 
@@ -68,6 +70,7 @@ int main(int argc, char* argv[]){
     MPI_Datatype ResultMpiType;
     //wrapper function to set up the custom type
     createMPIResultStruct(&ResultMpiType);
+    bool testing = false;
 
 
 
@@ -118,21 +121,17 @@ int main(int argc, char* argv[]){
             std::cerr << "Couldn't get the search vector" << std::endl;
             return 0;
         }
-        std::cout << searchVector.filename << std::endl;
-        for(int i = 0; i < 50; i++){
-            std::cout << searchVector.data.at(i);
-        }
 
-        return 0;
+
         std::cout << "file list resize" << std::endl;
         test.resize(2);
-        sendWork(test,&ResultMpiType,k,&finalResults);
-
+        sendWork(test,&ResultMpiType,k,&finalResults,searchVector.data);
+        std::cout<<"out of send work"<<std::endl;
 
 
         //wait for the workers to finish to collect the results
         MPI_Barrier(MPI_COMM_WORLD);
-
+        testing = true;
     }
     else{
         // ++++++++++++++++++++++++++++++
@@ -143,13 +142,14 @@ int main(int argc, char* argv[]){
         //used for the barrier in master
         MPI_Barrier(MPI_COMM_WORLD);
     }
-
     MPI_Type_free(&ResultMpiType);
 
     //Shut down MPI
     MPI_Finalize();
 
-    output_result_vector_to_file("results.csv", &finalResults);
+    if(testing){
+        output_result_vector_to_file("results.csv", &finalResults);
+    }
 
     return 1;
 
@@ -194,7 +194,7 @@ int getFirstVector(std::string filename,searchVector_t* returnData){
 }
 
 
-int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults){
+int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,const int k,std::vector<result_t>* finalResults,std::vector<float>& cmpVec){
 
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
@@ -211,6 +211,13 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
         char msg[MAX_MSG_SIZE];
         (*currFile).copy(msg,length);
         msg[length] = '\0';
+
+        MPI_Send(cmpVec.data(),
+            SEARCH_VECTOR_SIZE,
+            MPI_FLOAT,
+            rank,
+            SEARCH_VECTOR,
+            MPI_COMM_WORLD);
 
         MPI_Send(msg,           /* message buffer */
              MAX_MSG_SIZE,      /* buffer size */
@@ -293,7 +300,6 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,cons
 
     }
 
-
     //let the workers know their off shift, so relax and have a beer
     for (int rank = 1; rank < threadCount; ++rank) {
         MPI_Send(0, 0, MPI_INT, rank, TERMINATE, MPI_COMM_WORLD);
@@ -314,9 +320,23 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
 
 
     char msg[MAX_MSG_SIZE];
+    float cmpData[SEARCH_VECTOR_SIZE];
     MPI_Status status;
 
     std::chrono::duration<double> read_time_elapse;
+
+    MPI_Recv(cmpData,
+        SEARCH_VECTOR_SIZE,
+        MPI_FLOAT,
+        0,
+        MPI_ANY_TAG,
+        MPI_COMM_WORLD,
+        &status);
+
+    if(status.MPI_TAG != SEARCH_VECTOR){
+        std::cout<< rank << " recieved terminate signal" << std::endl;
+            return 0;
+    }
 
 
     while (1) {
@@ -346,7 +366,6 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
         std::shared_ptr<std::vector<float>> dataVector(new std::vector<float>);
         Parser p(nameMap,dataVector);
 
-        std::vector<float> cmpVec;
 
         if(!p.parse_file(msg,&read_time_elapse)){
             std::cerr<<"could not parse file: "<<msg<<std::endl;
@@ -358,7 +377,7 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
         for(auto& file : *nameMap){
             results.push_back(result_t());
             results.at(index).distance = findDist(lineLength,
-                dataVector,file.second,*dataVector);
+                dataVector,file.second,cmpData);
             strcpy(results.at(index).fileName,file.first.c_str());
             index++;
         }
@@ -410,11 +429,9 @@ int createMPIResultStruct(MPI_Datatype* ResultMpiType){
     }
 }
 
-float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,int startPos,std::vector<float> cmpVec){
-
+float findDist(int lineLength,std::shared_ptr<std::vector<float>> rawData,int startPos,float* cmpRaw){
     float sum = 0;
     float* rawd = (*rawData).data();
-    float* cmpRaw = cmpVec.data();
     //run the l1 norm formula
     for(int i = 0; i < lineLength; i++){
         sum += std::fabs(*(rawd+startPos+i) - *(cmpRaw+i));
