@@ -18,7 +18,7 @@
 
 //message size standards
 #define MAX_MSG_SIZE 100
-#define MAX_RESULT_SIZE 2000
+//#define MAX_RESULT_SIZE 2000
 #define SEARCH_VECTOR_SIZE 4098
 #define NUM_TIME_RESULTS 3
 
@@ -69,6 +69,21 @@ int main(int argc, char* argv[]){
     std::vector<result_t> finalResults;
     //init the k value
     int k = 0;
+
+    if(argc > 1){
+        try{
+            k = atoi(argv[1]);
+            if(k < 0){
+                throw "just need to throw a random exception to catch`";
+            }
+        }
+        catch(...){
+            std::cerr<<"k must be a positive integer"<<std::endl;
+            return 0;
+        }
+
+    }
+
     //init the custom openmpi datatype
     MPI_Datatype ResultMpiType;
     //wrapper function to set up the custom type
@@ -169,6 +184,7 @@ int main(int argc, char* argv[]){
         // ++++++++++++++++++++++++++++++
         // Workers
         // ++++++++++++++++++++++++++++++
+
         doWork(&ResultMpiType,k);
 
         //used for the barrier in master
@@ -224,7 +240,7 @@ int getFirstVector(std::string filename,searchVector_t* returnData){
 
 int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
     const int k,std::vector<result_t>* finalResults,std::vector<float>& cmpVec,double* timeResults){
-
+    int MAX_RESULT_SIZE = k;
     int threadCount;
     MPI_Comm_size(MPI_COMM_WORLD, &threadCount);
     int fileCount = 0;
@@ -255,7 +271,6 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
              rank,              /* destination process rank */
              FILENAME,         /* user chosen message tag */
              MPI_COMM_WORLD);   /* default communicator */
-        std::cout<<"Sending "<<msg<<"to "<<rank<<std::endl;
 
         fileCount++;
     }
@@ -266,6 +281,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
         result_t resultMsg[MAX_RESULT_SIZE];
         MPI_Status status;
         MPI_Status statusT;
+
 
         // Receive the result array from the worker
         MPI_Recv(&resultMsg,             /* message buffer */
@@ -372,7 +388,7 @@ int doWork(MPI_Datatype* ResultMpiType,const int k){
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+    int MAX_RESULT_SIZE = k;
 
     char msg[MAX_MSG_SIZE];
     float cmpData[SEARCH_VECTOR_SIZE];
