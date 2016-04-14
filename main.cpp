@@ -91,8 +91,9 @@ int main(int argc, char* argv[]){
 
         std::string folderPath;
 
+        //set the default for the folder to use
         if(argc == 2){
-            folderPath = "/cluster_dev";
+            folderPath = "/cluster";
         }
         else{
             folderPath = argv[2];
@@ -254,6 +255,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
              rank,              /* destination process rank */
              FILENAME,         /* user chosen message tag */
              MPI_COMM_WORLD);   /* default communicator */
+        std::cout<<"Sending "<<msg<<"to "<<rank<<std::endl;
 
         fileCount++;
     }
@@ -310,6 +312,7 @@ int sendWork(std::vector<std::string> fileNames,MPI_Datatype* ResultMpiType,
              sourceCaught,  /* destination process rank */
              FILENAME, /* user chosen message tag */
              MPI_COMM_WORLD);   /* default communicator */
+        std::cout<<"Sending "<<msg<<" to "<<sourceCaught<<std::endl;
         fileCount++;
 
     }

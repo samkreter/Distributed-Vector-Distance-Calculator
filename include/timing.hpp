@@ -16,3 +16,4 @@ private:
     timePoint_t _start;
     timePoint_t _end;
 };
+
