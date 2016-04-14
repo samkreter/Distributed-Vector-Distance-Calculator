@@ -26,4 +26,5 @@ def takeAverageOfFile(filenameIn, filenameOut):
 
 
 if __name__ == '__main__':
-    print(takeAverageOfFile("times.csv","averagedData.csv"))
+    test = takeAverageOfFile("times.csv","averagedData.csv")
+    print(test[test[:,2].argsort()])
