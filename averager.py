@@ -24,7 +24,22 @@ def takeAverageOfFile(filenameIn, filenameOut):
     np.savetxt(filenameOut,finalData,delimiter=",",fmt='%.5f')
     return finalData
 
+def getSumTimes(data):
+    return np.sum(data,axis=0)
+
+def getSumTimesFile():
+    data = np.genfromtxt("times.csv",delimiter=',')
+    return np.sum(data,axis=0)
+
+def getParalleSpeedUp(data):
+    results = getSumTimes(data)
+    return results[5] / results[2]
+
 
 if __name__ == '__main__':
     test = takeAverageOfFile("times.csv","averagedData.csv")
-    print(test[test[:,2].argsort()])
+    test2 = test[test[:,2].argsort()]
+    print(test2[])
+    #print(getSumTimes(test))
+    #print(getSumTimes())
+    #test1 = getParalleSpeedUp(test) * 100
