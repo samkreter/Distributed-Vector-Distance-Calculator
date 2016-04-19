@@ -1,4 +1,6 @@
+import matplotlib.pyplot as plt
 import numpy as np
+import pca
 
 ks = [ 100, 500, 1000, 1500, 2000]
 ps = [ 8, 16, 24, 32, 40, 48]
@@ -32,14 +34,54 @@ def getSumTimesFile():
     return np.sum(data,axis=0)
 
 def getParalleSpeedUp(data):
-    results = getSumTimes(data)
-    return results[5] / results[2]
+    for i in range(data[:,0].size):
+        data[i,3] = data[i,5] / data[i,2]
+    return data
+
+def plotkValues(data):
+    cs = ['r','b','g','y','k']
+    for c,k in zip(cs,ks):
+        plt.plot(data[data[:,1] == k,0], data[data[:,1] == k,2], c+'o-',label=str(k)+" K value")
+    plt.xlabel('Number of Procs')
+    plt.ylabel('Time to Process')
+    plt.grid(True)
+    plt.legend()
+    fig1 = plt.gcf()
+    fig1.savefig('kValue.png')
+    plt.show()
+
+def plotPValues(data):
+    cs = ['r','b','g','y','k','m']
+    for c,p in zip(cs,ps):
+        plt.plot(data[data[:,0] == p,1], data[data[:,0] == p,2], c+'o-',label=str(p)+" P value")
+
+    plt.xlabel('Number of K results')
+    plt.ylabel('Time to Process')
+    plt.grid(True)
+    plt.legend()
+    fig2 = plt.gcf()
+    fig2.savefig('pValue.png')
+    plt.show()
+
+
+
+def getLabels(data):
+    col1 = data[:,0]
+    col2 = data[:,1]
+
+    y = np.column_stack((col1,col2))
+    X = data[:,2:]
+
+    return X,y
 
 
 if __name__ == '__main__':
     test = takeAverageOfFile("times.csv","averagedData.csv")
     test2 = test[test[:,2].argsort()]
-    print(test2[])
+    getParalleSpeedUp(test)
+    final = test[test[:,2].argsort()]
+    np.savetxt("topValuesPar.csv",final[:,:4],delimiter=",",fmt='%.5f')
+    # plotPValues(test)
+    # plotkValues(test)
     #print(getSumTimes(test))
-    #print(getSumTimes())
     #test1 = getParalleSpeedUp(test) * 100
